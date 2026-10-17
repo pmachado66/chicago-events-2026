@@ -34,6 +34,8 @@ h1{font-size:17px;font-weight:700;color:var(--accent)}
 .pill{padding:5px 12px;border-radius:20px;border:none;cursor:pointer;font-size:13px;font-weight:500;background:var(--pill);color:var(--pill-text)}
 .pill.active{background:var(--accent);color:#fff}
 select.pill{padding:5px 8px;font-family:inherit}
+#typeH{margin-top:3px;font-size:11px;padding:2px 3px;max-width:120px;font-weight:500}
+#typeH.on{border-color:var(--accent);background:var(--accent);color:#fff}
 select.pill option{background:var(--card);color:var(--text)}
 input[type=text],select{padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--text);font-size:14px;outline:none}
 #search{flex:1;min-width:0}
@@ -86,6 +88,7 @@ input[type=date]{padding:6px 8px;border:1px solid var(--border);border-radius:8p
   a.gcal{padding:2px 5px;font-size:10px}
   .pill{padding:5px 9px;font-size:12px}
   select.pill{padding:5px 4px}
+  #typeH{font-size:10px;max-width:74px;padding:1px 2px}
   th:nth-child(5),td:nth-child(5){min-width:128px}
   th:nth-child(9),td:nth-child(9){min-width:112px}
   td.name a,td a.map{max-width:none;min-width:0;display:block;overflow-wrap:break-word;word-break:normal}
@@ -109,7 +112,7 @@ input[type=date]{padding:6px 8px;border:1px solid var(--border);border-radius:8p
       <button class="pill" onclick="clearDates()">Clear dates</button>
     </div>
     <div class="row">
-      <select id="typeF" onchange="render()"><option value="">All types</option></select>
+      <select id="typeF" style="display:none" onchange="render()"><option value="">All types</option></select>
       <span id="sortbox" class="row">
         <select id="sortF" onchange="setSort(this.value,true)">
           <option value="date">Sort: Date</option>
@@ -137,7 +140,7 @@ input[type=date]{padding:6px 8px;border:1px solid var(--border);border-radius:8p
   <th onclick="setSort('name')" data-k="name">Event <span class="arrow">&#8597;</span></th>
   <th onclick="setSort('rating')" data-k="rating">Rating <span class="arrow">&#8597;</span></th>
   <th onclick="setSort('alignment')" data-k="alignment">Alignment <span class="arrow">&#8597;</span></th>
-  <th onclick="setSort('type')" data-k="type">Type <span class="arrow">&#8597;</span></th>
+  <th onclick="setSort('type')" data-k="type">Type <span class="arrow">&#8597;</span><br><select id="typeH" aria-label="Filter by type" onclick="event.stopPropagation()" onchange="setTypeFilter(this.value)"><option value="">All</option></select></th>
   <th onclick="setSort('address')" data-k="address">Venue <span class="arrow">&#8597;</span></th>
   <th onclick="setSort('cost')" data-k="cost">Cost <span class="arrow">&#8597;</span></th>
 </tr></thead>
@@ -309,7 +312,8 @@ const TYPE_COLORS = {};
 const types=[...new Set(EVENTS.map(e=>e.type))].sort();
 types.forEach((t,i)=>TYPE_COLORS[t]=`hsl(${(i*67)%360},55%,42%)`);
 const sel=document.getElementById('typeF');
-types.forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;sel.appendChild(o);});
+types.forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;sel.appendChild(o);const h=document.createElement('option');h.value=t;h.textContent=t;document.getElementById('typeH').appendChild(h);});
+function setTypeFilter(v){document.getElementById('typeF').value=v;render();}
 
 let tf='upcoming', sortKey='date', sortDir=1, open=new Set();
 
@@ -395,6 +399,7 @@ function render(){
   const today=todayISO(),[wf,ws]=weekendISO();
   const _t=new Date();_t.setDate(_t.getDate()+1);const tmr=_t.getFullYear()+'-'+String(_t.getMonth()+1).padStart(2,'0')+'-'+String(_t.getDate()).padStart(2,'0');
   syncDay();
+  {const th=document.getElementById('typeH');if(th){th.value=document.getElementById('typeF').value;th.classList.toggle('on',!!th.value);}}
   const q=document.getElementById('search').value.toLowerCase();
   const tfil=document.getElementById('typeF').value;
   const dFrom=document.getElementById('dFrom').value, dTo=document.getElementById('dTo').value;
