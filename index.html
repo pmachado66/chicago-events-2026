@@ -73,6 +73,24 @@ input[type=date]{padding:6px 8px;border:1px solid var(--border);border-radius:8p
   th:first-child{background:var(--head);z-index:3}
   h1{font-size:16px}
 }
+@media(max-width:760px){
+  /* iPhone: compact narrow columns (Date, Start, End, Rating, Alignment, Type, Cost) */
+  th,td{padding:4px 3px}
+  th{font-size:9px;white-space:normal;line-height:1.1}
+  td{font-size:11px}
+  th:nth-child(1),td:nth-child(1),th:nth-child(3),td:nth-child(3),th:nth-child(4),td:nth-child(4),th:nth-child(6),td:nth-child(6),th:nth-child(7),td:nth-child(7),th:nth-child(8),td:nth-child(8),th:nth-child(10),td:nth-child(10){width:1%;min-width:0}
+  td:nth-child(1),td:nth-child(3),td:nth-child(4){white-space:normal;line-height:1.15}
+  td:nth-child(10){white-space:normal;overflow-wrap:anywhere;max-width:58px}
+  td .tag{font-size:9px;padding:1px 5px;max-width:62px;line-height:1.15}
+  td.nowrap{white-space:normal}
+  a.gcal{padding:2px 5px;font-size:10px}
+  .pill{padding:5px 9px;font-size:12px}
+  select.pill{padding:5px 4px}
+  th:nth-child(5),td:nth-child(5){min-width:128px}
+  th:nth-child(9),td:nth-child(9){min-width:112px}
+  td.name a,td a.map{max-width:none;min-width:0;display:block;overflow-wrap:break-word;word-break:normal}
+  table{width:auto;min-width:100%}
+}
 </style>
 </head>
 <body>
@@ -80,10 +98,9 @@ input[type=date]{padding:6px 8px;border:1px solid var(--border);border-radius:8p
   <div class="hrow"><h1>&#127919; Chicago Events 2026</h1><span id="stamp">1091 events &middot; updated October 17, 2026</span></div>
   <div class="controls">
     <div class="row">
-      <button class="pill active" data-tf="upcoming" onclick="setTf('upcoming')">Upcoming</button>
-      <select class="pill" id="dayF" aria-label="Day filter" onchange="setTf(this.value||'upcoming')"><option value="">Day&hellip;</option><option value="today">Today</option><option value="tomorrow">Tomorrow</option><option value="weekend">This Weekend</option></select>
-      <button class="pill" data-tf="past" onclick="setTf('past')">Past</button>
-      <button class="pill" data-tf="all" onclick="setTf('all')">All</button>
+      <button class="pill" data-tf="tomorrow" onclick="setTf('tomorrow')">Tomorrow</button>
+      <select class="pill" id="dayF" aria-label="Day filter" onchange="setTf(this.value||'upcoming')"><option value="">Day&hellip;</option><option value="today">Today</option><option value="weekend">This Weekend</option></select>
+      <select class="pill" id="showF" aria-label="Show" onchange="setTf(this.value||'upcoming')"><option value="">Show&hellip;</option><option value="upcoming">Upcoming</option><option value="past">Past</option><option value="all">All</option></select>
       <button class="pill" onclick="toggleDark()">&#9681;</button>
     </div>
     <div class="row"><input type="text" id="search" placeholder="Search events, venues, types&hellip;" oninput="render()"></div>
@@ -359,7 +376,7 @@ function gcalUrl(e){
 }
 
 function setTf(t){tf=t;document.querySelectorAll('.pill[data-tf]').forEach(p=>p.classList.toggle('active',p.dataset.tf===t));render();}
-function syncDay(){const s=document.getElementById('dayF');if(!s)return;const on=['today','tomorrow','weekend'].includes(tf);s.value=on?tf:'';s.classList.toggle('active',on);}
+function syncDay(){const d=document.getElementById('dayF'),s=document.getElementById('showF');if(!d||!s)return;const dn=['today','weekend'].includes(tf),sn=['upcoming','past','all'].includes(tf);d.value=dn?tf:'';d.classList.toggle('active',dn);s.value=sn?tf:'';s.classList.toggle('active',sn);}
 function toggleDark(){document.body.classList.toggle('dark');}
 function flipDir(){sortDir*=-1;document.getElementById('dirBtn').innerHTML=sortDir===1?'&uarr; Asc':'&darr; Desc';render();}
 function setSort(k,fromMenu){
