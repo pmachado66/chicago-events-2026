@@ -34,8 +34,14 @@ h1{font-size:17px;font-weight:700;color:var(--accent)}
 .pill{padding:5px 12px;border-radius:20px;border:none;cursor:pointer;font-size:13px;font-weight:500;background:var(--pill);color:var(--pill-text)}
 .pill.active{background:var(--accent);color:#fff}
 select.pill{padding:5px 8px;font-family:inherit}
-#typeH{margin-top:3px;font-size:11px;padding:2px 3px;max-width:120px;font-weight:500}
-#typeH.on{border-color:var(--accent);background:var(--accent);color:#fff}
+#typeBtn{margin-top:3px;font-size:11px;padding:2px 6px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);cursor:pointer}
+#typeBtn.on{border-color:var(--accent);background:var(--accent);color:#fff}
+#typePanel{position:fixed;z-index:50;max-height:60vh;overflow:auto;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.25);padding:6px;min-width:210px;font-size:14px;font-weight:400}
+#typePanel .tp-top{display:flex;gap:8px;justify-content:space-between;padding:2px 2px 6px;border-bottom:1px solid var(--border);margin-bottom:4px;position:sticky;top:0;background:var(--card)}
+#typePanel .tp-top button{font-size:12px;border:none;background:none;color:var(--accent);cursor:pointer;padding:4px}
+.tp-row{display:flex;gap:8px;align-items:center;padding:7px 6px;border-radius:6px;cursor:pointer;white-space:nowrap}
+.tp-row:hover{background:var(--head)}
+.tp-row input{width:16px;height:16px}
 select.pill option{background:var(--card);color:var(--text)}
 input[type=text],select{padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--text);font-size:14px;outline:none}
 #search{flex:1;min-width:0}
@@ -88,7 +94,7 @@ input[type=date]{padding:6px 8px;border:1px solid var(--border);border-radius:8p
   a.gcal{padding:2px 5px;font-size:10px}
   .pill{padding:5px 9px;font-size:12px}
   select.pill{padding:5px 4px}
-  #typeH{font-size:10px;max-width:74px;padding:1px 2px}
+  #typeBtn{font-size:10px;max-width:74px;padding:1px 3px}
   th:nth-child(5),td:nth-child(5){min-width:128px}
   th:nth-child(9),td:nth-child(9){min-width:112px}
   td.name a,td a.map{max-width:none;min-width:0;display:block;overflow-wrap:break-word;word-break:normal}
@@ -140,7 +146,7 @@ input[type=date]{padding:6px 8px;border:1px solid var(--border);border-radius:8p
   <th onclick="setSort('name')" data-k="name">Event <span class="arrow">&#8597;</span></th>
   <th onclick="setSort('rating')" data-k="rating">Rating <span class="arrow">&#8597;</span></th>
   <th onclick="setSort('alignment')" data-k="alignment">Alignment <span class="arrow">&#8597;</span></th>
-  <th onclick="setSort('type')" data-k="type">Type <span class="arrow">&#8597;</span><br><select id="typeH" aria-label="Filter by type" onclick="event.stopPropagation()" onchange="setTypeFilter(this.value)"><option value="">All</option></select></th>
+  <th onclick="setSort('type')" data-k="type">Type <span class="arrow">&#8597;</span><br><button type="button" id="typeBtn" aria-label="Filter by type" onclick="event.stopPropagation();toggleTypePanel()">All &#9662;</button></th>
   <th onclick="setSort('address')" data-k="address">Venue <span class="arrow">&#8597;</span></th>
   <th onclick="setSort('cost')" data-k="cost">Cost <span class="arrow">&#8597;</span></th>
 </tr></thead>
@@ -312,8 +318,16 @@ const TYPE_COLORS = {};
 const types=[...new Set(EVENTS.map(e=>e.type))].sort();
 types.forEach((t,i)=>TYPE_COLORS[t]=`hsl(${(i*67)%360},55%,42%)`);
 const sel=document.getElementById('typeF');
-types.forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;sel.appendChild(o);const h=document.createElement('option');h.value=t;h.textContent=t;document.getElementById('typeH').appendChild(h);});
-function setTypeFilter(v){document.getElementById('typeF').value=v;render();}
+types.forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;sel.appendChild(o);});
+const selTypes=new Set();
+(function(){const pn=document.createElement('div');pn.id='typePanel';pn.style.display='none';
+ pn.innerHTML='<div class="tp-top"><button type="button" onclick="clearTypes()">Clear (show all)</button><button type="button" onclick="toggleTypePanel()">Done</button></div>'+types.map((t,i)=>'<label class="tp-row"><input type="checkbox" value="'+esc(t)+'" onchange="typeToggled(this)"> <span>'+esc(t)+'</span></label>').join('');
+ document.body.appendChild(pn);
+ document.addEventListener('click',e=>{if(pn.style.display!=='none'&&!pn.contains(e.target)&&e.target.id!=='typeBtn')pn.style.display='none';});
+})();
+function toggleTypePanel(){const pn=document.getElementById('typePanel'),b=document.getElementById('typeBtn');if(pn.style.display!=='none'){pn.style.display='none';return;}const r=b.getBoundingClientRect();pn.style.display='block';const w=pn.offsetWidth;pn.style.left=Math.max(4,Math.min(r.left,window.innerWidth-w-4))+'px';pn.style.top=(r.bottom+4)+'px';}
+function typeToggled(cb){cb.checked?selTypes.add(cb.value):selTypes.delete(cb.value);render();}
+function clearTypes(){selTypes.clear();document.querySelectorAll('#typePanel input').forEach(i=>i.checked=false);render();}
 
 let tf='upcoming', sortKey='date', sortDir=1, open=new Set();
 
@@ -399,9 +413,9 @@ function render(){
   const today=todayISO(),[wf,ws]=weekendISO();
   const _t=new Date();_t.setDate(_t.getDate()+1);const tmr=_t.getFullYear()+'-'+String(_t.getMonth()+1).padStart(2,'0')+'-'+String(_t.getDate()).padStart(2,'0');
   syncDay();
-  {const th=document.getElementById('typeH');if(th){th.value=document.getElementById('typeF').value;th.classList.toggle('on',!!th.value);}}
+  {const tb=document.getElementById('typeBtn');if(tb){tb.textContent=(selTypes.size===0?'All':selTypes.size===1?[...selTypes][0]:selTypes.size+' types')+' \u25BE';tb.classList.toggle('on',selTypes.size>0);}}
   const q=document.getElementById('search').value.toLowerCase();
-  const tfil=document.getElementById('typeF').value;
+  const tfil='';
   const dFrom=document.getElementById('dFrom').value, dTo=document.getElementById('dTo').value;
   document.getElementById('daterow').classList.toggle('active-range',!!(dFrom||dTo));
   let out=EVENTS.filter(e=>{
@@ -412,7 +426,7 @@ function render(){
     if(tf==='weekend'&&(e.date<wf||e.date>ws))return false;
     if(dFrom&&e.date<dFrom)return false;
     if(dTo&&e.date>dTo)return false;
-    if(tfil&&e.type!==tfil)return false;
+    if(selTypes.size&&!selTypes.has(e.type))return false;
     if(q&&!Object.values(e).join(' ').toLowerCase().includes(q))return false;
     return true;
   });
